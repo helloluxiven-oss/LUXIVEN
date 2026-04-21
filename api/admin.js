@@ -62,5 +62,29 @@ module.exports = async (req, res) => {
     return res.json({ data, total: count });
   }
 
+  // POST /api/admin?action=add-product
+  if (req.method === 'POST' && action === 'add-product') {
+    const { name, price, compare_price, short_desc, description, category, images, badge, stock, slug } = req.body;
+    if (!name || !price) return res.status(422).json({ error: 'Name and price required' });
+    const { data, error } = await sb.from('products').insert({
+      name, price, compare_price, short_desc, description,
+      category, images, badge, stock: stock || 50,
+      slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      is_active: true, avg_rating: 0, review_count: 0,
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ success: true, product: data });
+  }
+
+  // PUT /api/admin?action=toggle-product&id=xxx
+  if (req.method === 'PUT' && action === 'toggle-product') {
+    const { id } = req.query;
+    const { is_active } = req.body;
+    const { data, error } = await sb.from('products').update({ is_active, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ success: true, product: data });
+  }
+
   res.status(400).json({ error: 'Unknown action' });
 };
