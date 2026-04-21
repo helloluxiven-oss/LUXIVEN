@@ -25,6 +25,7 @@
     { "src": "/api/wishlist",      "dest": "/api/wishlist" },
     { "src": "/api/newsletter",    "dest": "/api/newsletter" },
     { "src": "/api/admin(.*)",     "dest": "/api/admin" },
+    { "src": "/admin.html",        "dest": "/admin.html" },
     { "src": "/(.*)",              "dest": "/index.html" }
   ]
 }
