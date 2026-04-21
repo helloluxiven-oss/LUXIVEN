@@ -180,7 +180,7 @@ body.fullscreen #CB-TOP,body.fullscreen #CB-BOT{height:60px}
   50%{transform:scale(1.12) translate(-1%,-.5%)}
   100%{transform:scale(1.08) translate(.8%,.3%)}
 }
-.s0-bg img{filter:brightness(.62) saturate(.88) contrast(1.08)}
+.s0-bg img{filter:brightness(.32) saturate(.6) contrast(1.2)}
 .s0-vign{position:absolute;inset:0;background:radial-gradient(ellipse 90% 90% at 50% 50%,transparent 42%,rgba(3,2,2,.55))}
 .s0-fog{position:absolute;bottom:0;left:0;right:0;height:28%;background:linear-gradient(to top,var(--void),transparent);pointer-events:none}
 .s0-content{
@@ -255,7 +255,7 @@ body.fullscreen #CB-TOP,body.fullscreen #CB-BOT{height:60px}
   position:absolute;inset:-15%;transform-origin:center 48%;
   will-change:transform,filter;transition:filter .1s;
 }
-.room-bg img{filter:brightness(.72) saturate(.92) contrast(1.06)}
+.room-bg img{filter:brightness(.45) saturate(.75) contrast(1.15)}
 
 /* Room temperature tints per scene — BRIGHT & VISIBLE */
 #S1-BG img{filter:brightness(.74) saturate(1.0) contrast(1.06) sepia(.05)}
@@ -483,7 +483,7 @@ body.fullscreen #CB-TOP,body.fullscreen #CB-BOT{height:60px}
 .fp.on,.fp:hover{color:var(--gold);border-color:rgba(196,150,40,.25)}
 .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .pg .pc:first-child{grid-column:span 2}
-.pc{background:var(--coal);overflow:hidden;transition:transform .5s var(--cinematic)}
+.pc{background:#0C0908;overflow:hidden;transition:transform .6s cubic-bezier(0.16,1,0.3,1),box-shadow .6s ease;border:1px solid rgba(196,150,40,.06)}
 .pc:hover{transform:translateY(-6px)}
 .pci{position:relative;overflow:hidden;cursor:none}
 .pci img{transition:transform .8s var(--cinematic);filter:saturate(.72)}
@@ -850,6 +850,26 @@ body.in-room #SPOTLIGHT{opacity:1}
 </style>
 </head>
 <body>
+<!-- LUXURY PRELOADER -->
+<div id="PRELOADER" style="position:fixed;inset:0;background:#030202;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1s ease,visibility 1s ease">
+  <div style="font-family:'Bodoni Moda',Georgia,serif;font-size:clamp(28px,4vw,48px);font-weight:300;font-style:italic;color:#F5ECD7;letter-spacing:.08em;margin-bottom:40px;opacity:0;animation:fadeUp 1s .3s both">Luxiven</div>
+  <div style="width:120px;height:1px;background:rgba(196,150,40,.2);position:relative;overflow:hidden">
+    <div id="PBAR" style="position:absolute;left:-100%;top:0;width:100%;height:100%;background:linear-gradient(to right,transparent,rgba(196,150,40,.8),rgba(196,150,40,1));animation:slideBar 1.8s ease forwards"></div>
+  </div>
+  <span style="font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:rgba(196,150,40,.4);margin-top:20px;opacity:0;animation:fadeUp 1s .6s both">Objects of Consequence</span>
+</div>
+<style>
+@keyframes slideBar{0%{left:-100%}100%{left:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
+<script>
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    var p=document.getElementById('PRELOADER');
+    if(p){p.style.opacity='0';p.style.visibility='hidden';setTimeout(function(){p.remove()},1000)}
+  },2000)
+})
+</script>
 
 <!-- AMBIENT CANVAS -->
 <canvas id="AMBIENT"></canvas>
@@ -984,7 +1004,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <!-- ═══════════════════════════════════════════ -->
 <section id="S0">
   <div class="s0-bg">
-    <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=90" alt="Luxury home exterior" loading="eager">
+    <img src="https://images.unsplash.com/photo-1600210492493-0946911123ea?w=1920&q=90" alt="Luxury home exterior" loading="eager">
   </div>
   <div class="s0-vign"></div>
   <div class="s0-fog"></div>
@@ -1009,7 +1029,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <div class="room-scene" id="S1" data-scene="01" data-name="The Living Room" data-cam="f/1.4 · ISO 800 · 24mm" style="height:300vh">
   <div class="room-sticky">
     <div class="room-bg" id="S1-BG">
-      <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&q=90" alt="Living room" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1618220179428-22790b461013?w=1920&q=90" alt="Living room" loading="lazy">
     </div>
     <div class="room-scan" id="SCAN-S1"></div>
     <div class="room-depth-l"></div>
@@ -1062,7 +1082,7 @@ body.in-room #SPOTLIGHT{opacity:1}
     </div>
     <div class="room-products">
       <div class="rp-card" data-pid="p1">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200&q=80" alt="Sofa" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=85" alt="Sofa" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Living Room</span>
           <div class="rp-name">Velvet Meridian Sofa</div>
@@ -1071,7 +1091,7 @@ body.in-room #SPOTLIGHT{opacity:1}
         </div>
       </div>
       <div class="rp-card" data-pid="p2">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=200&q=80" alt="Table" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400&q=85" alt="Table" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Living Room</span>
           <div class="rp-name">Aurel Marble Table</div>
@@ -1080,7 +1100,7 @@ body.in-room #SPOTLIGHT{opacity:1}
         </div>
       </div>
       <div class="rp-card" data-pid="p8">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=200&q=80" alt="Chair" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&q=85" alt="Chair" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Living Room</span>
           <div class="rp-name">Meridian Accent Chair</div>
@@ -1130,7 +1150,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <div class="room-scene" id="S2" data-scene="02" data-name="The Bedroom" data-cam="f/2.0 · ISO 1600 · 35mm" style="height:300vh">
   <div class="room-sticky">
     <div class="room-bg" id="S2-BG">
-      <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=90" alt="Bedroom" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1920&q=90" alt="Bedroom" loading="lazy">
     </div>
     <div class="room-scan" id="SCAN-S2"></div>
     <div class="room-depth-l"></div>
@@ -1172,7 +1192,7 @@ body.in-room #SPOTLIGHT{opacity:1}
     </div>
     <div class="room-products">
       <div class="rp-card" data-pid="p4">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&q=80" alt="Bed" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=400&q=85" alt="Bed" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Bedroom</span>
           <div class="rp-name">Sable Platform Bed</div>
@@ -1181,7 +1201,7 @@ body.in-room #SPOTLIGHT{opacity:1}
         </div>
       </div>
       <div class="rp-card" data-pid="p7">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=200&q=80" alt="Bedding" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&q=85" alt="Bedding" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Bedroom</span>
           <div class="rp-name">Linen Cloud Bedding</div>
@@ -1209,7 +1229,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <div class="room-scene" id="S3" data-scene="03" data-name="The Dining Room" data-cam="f/2.8 · ISO 400 · 28mm" style="height:280vh">
   <div class="room-sticky">
     <div class="room-bg" id="S3-BG">
-      <img src="https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1920&q=90" alt="Dining room" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1615529328331-f8917597711f?w=1920&q=90" alt="Dining room" loading="lazy">
     </div>
     <div class="room-scan" id="SCAN-S3"></div>
     <div class="room-depth-l"></div>
@@ -1251,7 +1271,7 @@ body.in-room #SPOTLIGHT{opacity:1}
     </div>
     <div class="room-products">
       <div class="rp-card" data-pid="p3">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=200&q=80" alt="Lamp" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=400&q=85" alt="Lamp" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Lighting</span>
           <div class="rp-name">Nordic Arc Floor Lamp</div>
@@ -1260,7 +1280,7 @@ body.in-room #SPOTLIGHT{opacity:1}
         </div>
       </div>
       <div class="rp-card" data-pid="p6">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=200&q=80" alt="Vase" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=400&q=85" alt="Vase" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Decor</span>
           <div class="rp-name">Onyx Vessel Vase</div>
@@ -1288,7 +1308,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <div class="room-scene" id="S4" data-scene="04" data-name="The Home Office" data-cam="f/1.8 · ISO 1200 · 50mm" style="height:280vh">
   <div class="room-sticky">
     <div class="room-bg" id="S4-BG">
-      <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=1920&q=90" alt="Home office" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1593642634367-d91a135587b5?w=1920&q=90" alt="Home office" loading="lazy">
     </div>
     <div class="room-scan" id="SCAN-S4"></div>
     <div class="room-depth-l"></div>
@@ -1321,7 +1341,7 @@ body.in-room #SPOTLIGHT{opacity:1}
     </div>
     <div class="room-products">
       <div class="rp-card" data-pid="p5">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1593696140826-c58b021acf8b?w=200&q=80" alt="Desk" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1593696140826-c58b021acf8b?w=400&q=85" alt="Desk" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Office</span>
           <div class="rp-name">Arco Writing Desk</div>
@@ -1349,7 +1369,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <div class="room-scene" id="S5" data-scene="05" data-name="The Details" data-cam="f/1.2 · ISO 200 · 85mm" style="height:280vh">
   <div class="room-sticky">
     <div class="room-bg" id="S5-BG">
-      <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1920&q=90" alt="Decor details" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?w=1920&q=90" alt="Decor details" loading="lazy">
     </div>
     <div class="room-scan" id="SCAN-S5"></div>
     <div class="room-depth-l"></div>
@@ -1383,7 +1403,7 @@ body.in-room #SPOTLIGHT{opacity:1}
     </div>
     <div class="room-products">
       <div class="rp-card" data-pid="p6">
-        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=200&q=80" alt="Vase" loading="lazy"></div>
+        <div class="rp-thumb"><img src="https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=400&q=85" alt="Vase" loading="lazy"></div>
         <div class="rp-info">
           <span class="rp-cat">Decor</span>
           <div class="rp-name">Onyx Vessel Vase</div>
@@ -1398,7 +1418,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <!-- TOUR COMPLETE -->
 <section id="TOUREND">
   <div class="te-bg">
-    <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=85" alt="" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=90" alt="" loading="lazy">
   </div>
   <div class="te-vign"></div>
   <div class="te-content">
@@ -1418,21 +1438,37 @@ body.in-room #SPOTLIGHT{opacity:1}
   </div>
 </section>
 
-<!-- PHILOSOPHY -->
-<section id="PHI">
-  <div class="phi-left">
-    <span class="phi-tag">The Luxiven Standard</span>
-    <h2>We begin with<br>the <em>material.</em><br>Everything<br>else follows.</h2>
+<!-- EDITORIAL SPLIT — NEW LUXURY SECTION -->
+<section id="EDITORIAL" style="display:grid;grid-template-columns:1fr 1fr;min-height:100vh;overflow:hidden">
+  <div style="position:relative;overflow:hidden">
+    <img src="https://images.unsplash.com/photo-1505873242700-f289a29e1724?w=1200&q=90" alt="Craft" loading="lazy" style="width:100%;height:100%;object-fit:cover;filter:brightness(.6) saturate(.8) contrast(1.1);transform:scale(1.04);transition:transform 8s ease">
+    <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 60%,#030202 100%)"></div>
   </div>
-  <div class="phi-right">
-    <p>Every piece in the Luxiven collection starts with a single question: what is this made of, and does it deserve to exist? We refuse shortcuts. We source from artisans who remember that objects outlive their makers — and that a home is a living thing, not a catalog.</p>
-    <div class="phi-stats">
-      <div class="phi-stat"><strong class="phi-count">50</strong><span>Artisan Partners</span></div>
-      <div class="phi-stat"><strong class="phi-count">8</strong><span>Collections</span></div>
-      <div class="phi-stat"><strong class="phi-count">12000</strong><span>Homes Transformed</span></div>
+  <div style="background:#030202;display:flex;flex-direction:column;justify-content:center;padding:80px 72px">
+    <span style="font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:rgba(196,150,40,.5);margin-bottom:32px">The Luxiven Standard</span>
+    <h2 style="font-family:'Bodoni Moda',Georgia,serif;font-weight:300;font-style:italic;font-size:clamp(32px,3.5vw,56px);line-height:1.1;color:#F5ECD7;margin-bottom:32px">We begin with<br>the <em style="color:rgba(196,150,40,.9)">material.</em><br>Everything<br>else follows.</h2>
+    <div style="width:40px;height:1px;background:rgba(196,150,40,.4);margin-bottom:32px"></div>
+    <p style="font-size:15px;line-height:1.8;color:rgba(245,236,215,.55);font-weight:200;max-width:380px;margin-bottom:48px">Every piece in the Luxiven collection starts with a single question: what is this made of, and does it deserve to exist? We refuse shortcuts. We source from artisans who remember that objects outlive their makers.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px">
+      <div><strong style="font-family:'Bodoni Moda',Georgia,serif;font-size:36px;font-weight:300;color:#C49628;display:block">50+</strong><span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,236,215,.4)">Artisan Partners</span></div>
+      <div><strong style="font-family:'Bodoni Moda',Georgia,serif;font-size:36px;font-weight:300;color:#C49628;display:block">8</strong><span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,236,215,.4)">Collections</span></div>
+      <div><strong style="font-family:'Bodoni Moda',Georgia,serif;font-size:36px;font-weight:300;color:#C49628;display:block">12k</strong><span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,236,215,.4)">Homes Transformed</span></div>
     </div>
   </div>
 </section>
+
+<!-- EDITORIAL FULL WIDTH BANNER -->
+<div style="position:relative;height:70vh;overflow:hidden">
+  <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1920&q=90" alt="Craft detail" loading="lazy" style="width:100%;height:100%;object-fit:cover;filter:brightness(.45) saturate(.7) contrast(1.15)">
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px">
+    <span style="font-size:9px;letter-spacing:.6em;text-transform:uppercase;color:rgba(196,150,40,.6);margin-bottom:24px">Objects of Consequence</span>
+    <h2 style="font-family:'Bodoni Moda',Georgia,serif;font-weight:300;font-size:clamp(36px,5vw,80px);line-height:1.05;color:#F5ECD7;margin-bottom:24px">Not fast.<br><em style="color:rgba(196,150,40,.9)">Not disposable.</em><br>Not ordinary.</h2>
+    <div style="width:1px;height:60px;background:linear-gradient(to bottom,rgba(196,150,40,.6),transparent);margin:0 auto"></div>
+  </div>
+</div>
+
+<!-- PHILOSOPHY -->
+<section id="PHI" style="display:none"></section>
 
 <!-- THE COLLECTION SHOP -->
 <section id="SHOP">
@@ -1457,7 +1493,7 @@ body.in-room #SPOTLIGHT{opacity:1}
 <!-- CINEMATIC QUOTE -->
 <div id="CQUOTE">
   <div class="cq-bg">
-    <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=85" alt="Atmosphere" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=90" alt="Atmosphere" loading="lazy">
   </div>
   <div class="cq-overlay"></div>
   <div class="cq-frame">
@@ -1483,6 +1519,31 @@ body.in-room #SPOTLIGHT{opacity:1}
     <p class="nlno">We curate carefully, so we email sparingly. Unsubscribe anytime.</p>
   </div>
 </section>
+
+<!-- TRUST BADGES -->
+<div style="background:#0C0908;border-top:1px solid rgba(196,150,40,.12);border-bottom:1px solid rgba(196,150,40,.12);padding:40px 60px;display:flex;justify-content:center;gap:80px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:16px">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(196,150,40,.7)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div><div style="font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,236,215,.8);margin-bottom:3px">Secure Checkout</div><div style="font-size:11px;color:rgba(245,236,215,.35)">256-bit SSL encryption</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(196,150,40,.7)" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    <div><div style="font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,236,215,.8);margin-bottom:3px">Free Shipping</div><div style="font-size:11px;color:rgba(245,236,215,.35)">On orders over $200</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(196,150,40,.7)" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    <div><div style="font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,236,215,.8);margin-bottom:3px">30-Day Returns</div><div style="font-size:11px;color:rgba(245,236,215,.35)">Hassle-free guarantee</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(196,150,40,.7)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <div><div style="font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,236,215,.8);margin-bottom:3px">Artisan Quality</div><div style="font-size:11px;color:rgba(245,236,215,.35)">Handcrafted with care</div></div>
+  </div>
+</div>
+
+<!-- WHATSAPP FLOATING BUTTON -->
+<a href="https://wa.me/message/luxiven" target="_blank" id="WABTN" style="position:fixed;bottom:32px;right:32px;z-index:99999;width:56px;height:56px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(37,211,102,.4);cursor:none;transition:transform .3s,box-shadow .3s" onmouseenter="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(37,211,102,.6)'" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 24px rgba(37,211,102,.4)'">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.984 0C5.373 0 0 5.373 0 11.984c0 2.091.548 4.053 1.504 5.762L0 24l6.395-1.676C8.04 23.387 9.977 24 11.984 24 18.595 24 24 18.627 24 12.016 24 5.373 18.595 0 11.984 0zm0 21.818c-1.878 0-3.629-.509-5.128-1.393l-.368-.218-3.813.999 1.017-3.713-.24-.38a9.833 9.833 0 0 1-1.51-5.129c0-5.44 4.426-9.866 9.874-9.866 5.44 0 9.866 4.426 9.866 9.866-.008 5.44-4.426 9.834-9.698 9.834z"/></svg>
+</a>
 
 <!-- FOOTER -->
 <footer>
@@ -1969,14 +2030,14 @@ var S = {
 
 // ── PRODUCT DATA (fallback while API loads) ──────────────────
 var P = [
-  {id:'p1',name:'Velvet Meridian Sofa',cat:'living-room',sd:'Hand-stitched Italian velvet on solid walnut legs.',desc:'Hand-stitched in Italian velvet with a solid walnut frame. Each cushion individually filled with premium goose down. A statement of quiet authority that commands any room without raising its voice.',price:2490,was:3200,badge:'Bestseller',img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',feats:['Grade-A Italian velvet','Solid walnut frame','Removable cushion covers','10-year warranty'],avg:4.9,cnt:48},
-  {id:'p2',name:'Aurel Marble Coffee Table',cat:'living-room',sd:'White Carrara marble top on brushed brass base.',desc:'White Carrara marble top on a hand-formed brushed brass base. Each marble slab is unique — no two tables identical.',price:1890,was:2400,badge:'New Arrival',img:'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&q=80',feats:['Carrara marble surface','Brushed brass base','Waterproof sealant','Each piece unique'],avg:4.8,cnt:31},
-  {id:'p3',name:'Nordic Arc Floor Lamp',cat:'lighting',sd:'Sculptural arc in matte black with warm linen shade.',desc:'A sculptural arc lamp in matte black with a warm-toned linen shade that casts a pool of warm light transforming any room.',price:680,was:890,badge:'',img:'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&q=80',feats:['Matte black steel','Handmade linen shade','Dimmable LED 8W 2700K','10-min assembly'],avg:4.7,cnt:22},
-  {id:'p4',name:'Sable Platform Bed',cat:'bedroom',sd:'Ultra-low platform bed in hand-smoked solid oak.',desc:'Ultra-low profile platform bed in hand-smoked oak. The smoked finish applied by hand using traditional Japanese Shou Sugi Ban technique.',price:3200,was:4100,badge:'Signature',img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',feats:['Hand-smoked solid oak','Shou Sugi Ban technique','Integrated slatted base','Custom dimensions'],avg:5,cnt:19},
-  {id:'p5',name:'Arco Writing Desk',cat:'office',sd:'Slim solid ash desk with full-grain leather pull.',desc:'A slim, purposeful desk in solid ash with a single full-grain leather drawer pull.',price:1450,was:null,badge:'',img:'https://images.unsplash.com/photo-1593696140826-c58b021acf8b?w=800&q=80',feats:['Solid ash 3-coat wax','Full-grain leather pull','Cable management slot','50+ year lifespan'],avg:4.8,cnt:14},
-  {id:'p6',name:'Onyx Vessel Vase',cat:'decor',sd:'Hand-thrown ceramic in unique onyx reactive glaze.',desc:'Hand-thrown ceramic vessel in deep onyx reactive glaze. Each piece is entirely unique.',price:340,was:460,badge:'Limited',img:'https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=800&q=80',feats:['Hand-thrown stoneware','Unique reactive glaze','Artisan-signed base','Waterproof interior'],avg:4.9,cnt:37},
+  {id:'p1',name:'Velvet Meridian Sofa',cat:'living-room',sd:'Hand-stitched Italian velvet on solid walnut legs.',desc:'Hand-stitched in Italian velvet with a solid walnut frame. Each cushion individually filled with premium goose down. A statement of quiet authority that commands any room without raising its voice.',price:2490,was:3200,badge:'Bestseller',img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=90',feats:['Grade-A Italian velvet','Solid walnut frame','Removable cushion covers','10-year warranty'],avg:4.9,cnt:48},
+  {id:'p2',name:'Aurel Marble Coffee Table',cat:'living-room',sd:'White Carrara marble top on brushed brass base.',desc:'White Carrara marble top on a hand-formed brushed brass base. Each marble slab is unique — no two tables identical.',price:1890,was:2400,badge:'New Arrival',img:'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=1200&q=90',feats:['Carrara marble surface','Brushed brass base','Waterproof sealant','Each piece unique'],avg:4.8,cnt:31},
+  {id:'p3',name:'Nordic Arc Floor Lamp',cat:'lighting',sd:'Sculptural arc in matte black with warm linen shade.',desc:'A sculptural arc lamp in matte black with a warm-toned linen shade that casts a pool of warm light transforming any room.',price:680,was:890,badge:'',img:'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&q=90',feats:['Matte black steel','Handmade linen shade','Dimmable LED 8W 2700K','10-min assembly'],avg:4.7,cnt:22},
+  {id:'p4',name:'Sable Platform Bed',cat:'bedroom',sd:'Ultra-low platform bed in hand-smoked solid oak.',desc:'Ultra-low profile platform bed in hand-smoked oak. The smoked finish applied by hand using traditional Japanese Shou Sugi Ban technique.',price:3200,was:4100,badge:'Signature',img:'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=90',feats:['Hand-smoked solid oak','Shou Sugi Ban technique','Integrated slatted base','Custom dimensions'],avg:5,cnt:19},
+  {id:'p5',name:'Arco Writing Desk',cat:'office',sd:'Slim solid ash desk with full-grain leather pull.',desc:'A slim, purposeful desk in solid ash with a single full-grain leather drawer pull.',price:1450,was:null,badge:'',img:'https://images.unsplash.com/photo-1593696140826-c58b021acf8b?w=1200&q=90',feats:['Solid ash 3-coat wax','Full-grain leather pull','Cable management slot','50+ year lifespan'],avg:4.8,cnt:14},
+  {id:'p6',name:'Onyx Vessel Vase',cat:'decor',sd:'Hand-thrown ceramic in unique onyx reactive glaze.',desc:'Hand-thrown ceramic vessel in deep onyx reactive glaze. Each piece is entirely unique.',price:340,was:460,badge:'Limited',img:'https://images.unsplash.com/photo-1602928298849-e5d4b53f4c6c?w=1200&q=90',feats:['Hand-thrown stoneware','Unique reactive glaze','Artisan-signed base','Waterproof interior'],avg:4.9,cnt:37},
   {id:'p7',name:'Linen Cloud Bedding',cat:'bedroom',sd:'Pure French linen, stone-washed 12 times.',desc:'Pure French linen bedding stone-washed 12 times for unparalleled softness from the very first night.',price:380,was:520,badge:'New Arrival',img:'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&q=80',feats:['100% French linen','Stone-washed 12×','OEKO-TEX certified','Machine washable'],avg:4.9,cnt:61},
-  {id:'p8',name:'Meridian Accent Chair',cat:'living-room',sd:'High-back boucle accent chair on solid brass legs.',desc:'A compact accent chair with a high curved back and solid brass legs. Upholstered in boucle fabric that catches the light beautifully.',price:1290,was:1680,badge:'',img:'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&q=80',feats:['Boucle upholstery','Solid brass legs','High curved back','Ivory & charcoal options'],avg:4.7,cnt:25}
+  {id:'p8',name:'Meridian Accent Chair',cat:'living-room',sd:'High-back boucle accent chair on solid brass legs.',desc:'A compact accent chair with a high curved back and solid brass legs. Upholstered in boucle fabric that catches the light beautifully.',price:1290,was:1680,badge:'',img:'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1200&q=90',feats:['Boucle upholstery','Solid brass legs','High curved back','Ivory & charcoal options'],avg:4.7,cnt:25}
 ];
 
 // Load products from API (replaces static data)
