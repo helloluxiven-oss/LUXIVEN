@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "methods": ["OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization"
+      },
+      "dest": "/api/$1"
+    },
+    { "src": "/api/auth/register", "dest": "/api/auth?action=register" },
+    { "src": "/api/auth/login",    "dest": "/api/auth?action=login" },
+    { "src": "/api/auth/me",       "dest": "/api/auth?action=me" },
+    { "src": "/api/auth(.*)",      "dest": "/api/auth" },
+    { "src": "/api/products(.*)",  "dest": "/api/products" },
+    { "src": "/api/cart/item",     "dest": "/api/cart" },
+    { "src": "/api/cart(.*)",      "dest": "/api/cart" },
+    { "src": "/api/coupon",        "dest": "/api/coupon" },
+    { "src": "/api/checkout",      "dest": "/api/checkout" },
+    { "src": "/api/webhook",       "dest": "/api/webhook" },
+    { "src": "/api/orders(.*)",    "dest": "/api/orders" },
+    { "src": "/api/wishlist",      "dest": "/api/wishlist" },
+    { "src": "/api/newsletter",    "dest": "/api/newsletter" },
+    { "src": "/api/admin(.*)",     "dest": "/api/admin" },
+    { "src": "/(.*)",              "dest": "/index.html" }
+  ]
+}
