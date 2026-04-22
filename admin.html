@@ -243,6 +243,36 @@ tr:hover td{background:rgba(196,150,40,.03)}
     <!-- PRODUCTS -->
     <div class="panel" id="panel-products">
       <div class="ph"><span class="ph-eyebrow">Inventory</span><div class="ph-title">All Products</div></div>
+
+      <!-- SUPPLIER SOURCING TOOL -->
+      <div style="background:var(--coal);border:1px solid rgba(196,150,40,.2);padding:24px;margin-bottom:28px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div class="ai-dot"></div>
+          <span style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)">Supplier Sourcing Tool — Click a product to update its supplier image</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px" id="SUPPLIER-BTNS"></div>
+        <div id="SUPPLIER-FORM" style="display:none">
+          <div style="background:var(--smoke);border:1px solid rgba(196,150,40,.1);padding:20px;margin-bottom:16px">
+            <div style="font-size:13px;color:var(--ivory);margin-bottom:8px" id="SF-NAME"></div>
+            <div style="font-size:11px;color:var(--dust);margin-bottom:16px" id="SF-INFO"></div>
+            <a id="SF-LINK" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:rgba(196,150,40,.15);border:1px solid rgba(196,150,40,.3);color:var(--gold);font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:8px 16px;text-decoration:none;margin-bottom:16px">
+              🔍 Search on CJDropshipping →
+            </a>
+            <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--dust);margin-bottom:8px">Paste real supplier image URL here:</div>
+            <div style="display:flex;gap:10px">
+              <input class="ai-input" id="SF-IMG" placeholder="https://cjdropshipping.com/image/..." style="margin-bottom:0;flex:1;height:44px">
+              <button class="ai-btn" id="SF-SAVE">Update Image</button>
+            </div>
+            <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--dust);margin-top:16px;margin-bottom:8px">Or update sell price:</div>
+            <div style="display:flex;gap:10px">
+              <input class="ai-input" id="SF-PRICE" type="number" placeholder="New price e.g. 280" style="margin-bottom:0;flex:1;height:44px">
+              <input class="ai-input" id="SF-WAS" type="number" placeholder="Was price e.g. 360" style="margin-bottom:0;flex:1;height:44px">
+              <button class="ai-btn" id="SF-PRICE-SAVE" style="background:rgba(26,74,122,.8)">Update Price</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="PROD-LIST" class="prod-grid"></div>
     </div>
 
@@ -651,13 +681,90 @@ async function loadProducts() {
           <div class="prod-price">$${p.price?.toLocaleString()}</div>
           <div class="prod-margin">Stock: ${p.stock||0} · ${p.category}</div>
           <div class="prod-actions">
-            <button class="prod-btn prod-add" onclick="editProduct('${p.id}')">Edit</button>
+            <button class="prod-btn prod-add" onclick="selectSupplierByName('${p.slug}')">Update Supplier</button>
             <button class="prod-btn prod-ai" onclick="toggleActive('${p.id}',${p.is_active})">${p.is_active?'Deactivate':'Activate'}</button>
           </div>
         </div>
       </div>`).join('');
+    initSupplierTool();
   } catch(e) { console.error(e); }
 }
+
+// ── SUPPLIER SOURCING TOOL ─────────────────────────────────────
+const SUPPLIERS = [
+  { slug:'luxury-feather-floor-lamp', name:'Feather Floor Lamp', buy:'$35-50', sell:'$280', margin:'84%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=feather+floor+lamp+brass' },
+  { slug:'smart-app-curtains', name:'Smart Curtains', buy:'$35-45', sell:'$169', margin:'78%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=smart+motorized+curtains+wifi' },
+  { slug:'marble-brass-coffee-table', name:'Marble Coffee Table', buy:'$75-95', sell:'$490', margin:'83%', cj:'https://cjdropshipping.com/list/wholesale-furniture-l-2410301014451618100.html?q=marble+coffee+table+brass+legs' },
+  { slug:'boucle-accent-chair', name:'Boucle Chair', buy:'$110-140', sell:'$650', margin:'82%', cj:'https://cjdropshipping.com/list/wholesale-furniture-l-2410301014451618100.html?q=boucle+accent+chair+gold+legs' },
+  { slug:'diatomite-bath-mat-set', name:'Diatomite Mat', buy:'$10-14', sell:'$59', margin:'80%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=diatomite+bath+mat+stone' },
+  { slug:'velvet-throw-pillow-set', name:'Velvet Pillows', buy:'$16-22', sell:'$89', margin:'80%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=velvet+throw+pillow+set+4pcs' },
+  { slug:'led-sculptural-chandelier', name:'LED Chandelier', buy:'$48-65', sell:'$320', margin:'83%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=geometric+brass+chandelier+led' },
+  { slug:'artificial-olive-tree', name:'Olive Tree', buy:'$55-75', sell:'$280', margin:'77%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=artificial+olive+tree+180cm' },
+  { slug:'french-linen-bedding-set', name:'Linen Bedding', buy:'$38-50', sell:'$220', margin:'81%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=linen+bedding+set+stonewashed' },
+  { slug:'ceramic-vase-set', name:'Ceramic Vases', buy:'$18-28', sell:'$110', margin:'80%', cj:'https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=ceramic+vase+set+3pcs+nordic' }
+];
+
+let selectedSlug = null;
+
+function initSupplierTool() {
+  const btns = document.getElementById('SUPPLIER-BTNS');
+  if (!btns || btns.children.length > 0) return;
+  btns.innerHTML = SUPPLIERS.map(s => `
+    <button onclick="selectSupplier('${s.slug}')" id="sbtn-${s.slug}"
+      style="background:var(--smoke);border:1px solid rgba(196,150,40,.12);color:var(--dust);font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:10px 8px;cursor:pointer;transition:all .3s;text-align:center">
+      ${s.name}<br>
+      <span style="color:var(--gold);font-size:11px">${s.sell}</span>
+      <span style="color:rgba(196,150,40,.4)"> · ${s.margin}</span>
+    </button>`).join('');
+}
+
+function selectSupplierByName(slug) {
+  initSupplierTool();
+  selectSupplier(slug);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function selectSupplier(slug) {
+  selectedSlug = slug;
+  const s = SUPPLIERS.find(x => x.slug === slug);
+  if (!s) return;
+  document.querySelectorAll('[id^="sbtn-"]').forEach(b => b.style.borderColor = 'rgba(196,150,40,.12)');
+  const btn = document.getElementById('sbtn-' + slug);
+  if (btn) btn.style.borderColor = 'var(--gold)';
+  document.getElementById('SF-NAME').textContent = s.name + ' — Buy: ' + s.buy + ' · Sell: ' + s.sell + ' · Margin: ' + s.margin;
+  document.getElementById('SF-INFO').textContent = 'Click the CJ link below → find the product → right-click its main image → Copy Image Address → paste above';
+  document.getElementById('SF-LINK').href = s.cj;
+  document.getElementById('SUPPLIER-FORM').style.display = 'block';
+  document.getElementById('SF-IMG').value = '';
+}
+
+document.addEventListener('click', async function(e) {
+  if (e.target.id === 'SF-SAVE') {
+    const img = document.getElementById('SF-IMG').value.trim();
+    if (!img || !selectedSlug) { notif('Paste an image URL first', 'error'); return; }
+    try {
+      const data = await api('/api/admin?action=update-product&slug=' + selectedSlug, {
+        method: 'PUT', body: JSON.stringify({ images: [img] })
+      });
+      if (data.error) { notif(data.error, 'error'); return; }
+      notif('✅ Image updated live!', 'success');
+      loadProducts();
+    } catch(e2) { notif('Error updating', 'error'); }
+  }
+  if (e.target.id === 'SF-PRICE-SAVE') {
+    const price = document.getElementById('SF-PRICE').value;
+    const was = document.getElementById('SF-WAS').value;
+    if (!price || !selectedSlug) { notif('Enter a price first', 'error'); return; }
+    try {
+      const data = await api('/api/admin?action=update-product&slug=' + selectedSlug, {
+        method: 'PUT', body: JSON.stringify({ price: parseFloat(price), compare_price: was ? parseFloat(was) : null })
+      });
+      if (data.error) { notif(data.error, 'error'); return; }
+      notif('✅ Price updated live!', 'success');
+      loadProducts();
+    } catch(e2) { notif('Error updating', 'error'); }
+  }
+});
 
 // ── NEWSLETTER ─────────────────────────────────────────────────
 async function loadNewsletter() {

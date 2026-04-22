@@ -77,6 +77,17 @@ module.exports = async (req, res) => {
     return res.json({ success: true, product: data });
   }
 
+  // PUT /api/admin?action=update-product&slug=xxx
+  if (req.method === 'PUT' && action === 'update-product') {
+    const { slug } = req.query;
+    const updates = req.body;
+    const allowed = ['images','price','compare_price','name','short_desc','description','badge','stock','is_active'];
+    const filtered = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
+    const { data, error } = await sb.from('products').update(filtered).eq('slug', slug).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ success: true, product: data });
+  }
+
   // PUT /api/admin?action=toggle-product&id=xxx
   if (req.method === 'PUT' && action === 'toggle-product') {
     const { id } = req.query;
