@@ -670,10 +670,11 @@ async function loadOrders() {
 // ── PRODUCTS ────────────────────────────────────────────────────
 async function loadProducts() {
   try {
-    const data = await api('/api/products');
+    const data = await api('/api/products?limit=50');
     const grid = document.getElementById('PROD-LIST');
-    if (!data.products?.length) { grid.innerHTML = '<p style="color:var(--dust)">No products found.</p>'; return; }
-    grid.innerHTML = data.products.map(p => `
+    const prods = data.data || data.products || [];
+    if (!prods.length) { grid.innerHTML = '<p style="color:var(--dust)">No products found.</p>'; return; }
+    grid.innerHTML = prods.map(p => `
       <div class="prod-card">
         <div class="prod-img"><img src="${p.images?.[0]||''}" alt="${p.name}" loading="lazy"></div>
         <div class="prod-body">
