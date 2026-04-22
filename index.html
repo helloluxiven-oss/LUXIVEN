@@ -2055,7 +2055,7 @@ api('GET', '/products').then(function(res) {
         slug:  p.slug
       };
     });
-    renderP(P);
+    filterP(''); // reset to All Objects and render
   }
 }).catch(function() { renderP(P); }); // fallback to static
 
@@ -2128,7 +2128,7 @@ function renderP(list) {
       + '</div>'
     + '</div>';
   }).join('');
-  gsap.set('#PG .pc', { opacity: 0, y: 28 });
+  gsap.fromTo('#PG .pc', { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: .9, ease: 'power3.out', stagger: .06 });
   bindTilt(g.querySelectorAll('.pc'));
 }
 
