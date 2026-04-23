@@ -233,10 +233,45 @@ tr:hover td{background:rgba(196,150,40,.03)}
     <!-- ORDERS -->
     <div class="panel" id="panel-orders">
       <div class="ph"><span class="ph-eyebrow">Management</span><div class="ph-title">All Orders</div></div>
+
+      <!-- ORDER DETAIL MODAL -->
+      <div id="ORDER-MODAL" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:var(--coal);border:1px solid rgba(196,150,40,.2);width:600px;max-height:90vh;overflow-y:auto;padding:32px;position:relative">
+          <button onclick="closeOrderModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--dust);font-size:20px;cursor:pointer">×</button>
+          <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(196,150,40,.5);margin-bottom:8px">Order Details</div>
+          <div id="OM-NUMBER" style="font-family:var(--serif);font-size:22px;font-weight:300;color:var(--gold);margin-bottom:24px"></div>
+          <div id="OM-BODY"></div>
+          <div class="sec-div"></div>
+          <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(196,150,40,.5);margin-bottom:16px">Fulfil This Order</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <a id="OM-CJ" href="#" target="_blank" class="ai-btn" style="text-decoration:none;justify-content:center">
+              🔍 Source on CJDropshipping
+            </a>
+            <a id="OM-TD" href="https://seller.teemdrop.com/find-product/teemdrop-products" target="_blank" class="ai-btn" style="text-decoration:none;justify-content:center;background:rgba(26,74,122,.8)">
+              🚚 Fulfil via TeemDrop
+            </a>
+          </div>
+          <label class="ai-label">Tracking Number (after shipping)</label>
+          <input class="ai-input" id="OM-TRACK" placeholder="e.g. YT2412345678" style="height:44px;margin-bottom:12px">
+          <select class="ai-select" id="OM-SUPPLIER" style="margin-bottom:12px">
+            <option value="cjdropshipping">CJDropshipping</option>
+            <option value="teemdrop">TeemDrop</option>
+            <option value="manual">Manual / Other</option>
+          </select>
+          <button class="ai-btn" id="OM-SHIP-BTN" style="width:100%;justify-content:center">
+            ✅ Mark as Shipped + Notify Customer
+          </button>
+          <div class="ai-loading" id="OM-LOAD" style="justify-content:center;margin-top:12px"><div class="ai-spinner"></div>Updating order...</div>
+        </div>
+      </div>
+
       <div class="table-wrap">
-        <div class="table-head"><span class="table-title">Orders</span></div>
-        <table><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
-        <tbody id="ALL-ORDERS"><tr><td colspan="6" style="text-align:center;color:var(--dust);padding:40px">Loading...</td></tr></tbody></table>
+        <div class="table-head">
+          <span class="table-title">Orders</span>
+          <span id="ORDER-COUNT" style="font-size:11px;color:var(--dust)"></span>
+        </div>
+        <table><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="ALL-ORDERS"><tr><td colspan="7" style="text-align:center;color:var(--dust);padding:40px">Loading...</td></tr></tbody></table>
       </div>
     </div>
 
@@ -650,22 +685,101 @@ async function loadDashboard() {
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────
+let currentOrder = null;
+
 async function loadOrders() {
   try {
     const data = await api('/api/admin?action=orders');
     const tbody = document.getElementById('ALL-ORDERS');
-    if (!data.data?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dust);padding:40px">No orders yet</td></tr>'; return; }
+    const count = document.getElementById('ORDER-COUNT');
+    if (!data.data?.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dust);padding:40px">No orders yet — share your store link to get your first sale!</td></tr>';
+      return;
+    }
+    if (count) count.textContent = `${data.total || data.data.length} total`;
     tbody.innerHTML = data.data.map(o => `
       <tr>
-        <td style="color:var(--gold)">${o.order_number||'—'}</td>
+        <td style="color:var(--gold);cursor:pointer" onclick="openOrderModal('${o.id}')">${o.order_number||'—'}</td>
         <td>${o.guest_email||o.shipping_address?.email||'—'}</td>
         <td style="font-family:var(--serif)">$${parseFloat(o.total||0).toLocaleString()}</td>
         <td><span class="badge badge-${o.payment_status==='paid'?'paid':'pending'}">${o.payment_status||'—'}</span></td>
-        <td><span class="badge badge-${o.status==='shipped'?'shipped':'pending'}">${o.status||'pending'}</span></td>
+        <td><span class="badge badge-${o.status==='shipped'?'shipped':o.status==='pending'?'pending':'paid'}">${o.status||'pending'}</span></td>
         <td style="color:var(--dust)">${new Date(o.created_at).toLocaleDateString()}</td>
+        <td>
+          <button onclick="openOrderModal('${o.id}')" style="background:rgba(196,150,40,.15);border:1px solid rgba(196,150,40,.2);color:var(--gold);font-family:var(--sans);font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:6px 12px;cursor:pointer">
+            ${o.status==='shipped'?'View':'Fulfil →'}
+          </button>
+        </td>
       </tr>`).join('');
   } catch(e) { console.error(e); }
 }
+
+async function openOrderModal(orderId) {
+  try {
+    const data = await api('/api/admin?action=orders');
+    const order = data.data?.find(o => o.id === orderId);
+    if (!order) return;
+    currentOrder = order;
+
+    document.getElementById('OM-NUMBER').textContent = order.order_number;
+    const addr = order.shipping_address || {};
+    const items = (order.order_items || []).map(i =>
+      `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(196,150,40,.08)">
+        <span style="font-size:13px;color:var(--ivory)">${i.name} × ${i.qty}</span>
+        <span style="color:var(--gold);font-family:var(--serif)">$${(i.price*i.qty).toLocaleString()}</span>
+      </div>`).join('');
+
+    document.getElementById('OM-BODY').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div style="background:var(--smoke);padding:16px">
+          <div style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(196,150,40,.4);margin-bottom:8px">Customer</div>
+          <div style="font-size:13px;color:var(--ivory)">${order.guest_email||'—'}</div>
+        </div>
+        <div style="background:var(--smoke);padding:16px">
+          <div style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(196,150,40,.4);margin-bottom:8px">Ship To</div>
+          <div style="font-size:12px;color:var(--dust);line-height:1.6">${addr.firstName||''} ${addr.lastName||''}<br>${addr.address||''}<br>${addr.city||''} ${addr.zip||''}</div>
+        </div>
+      </div>
+      <div>${items}</div>
+      <div style="text-align:right;margin-top:12px;font-family:var(--serif);font-size:18px;color:var(--gold)">Total: $${parseFloat(order.total||0).toLocaleString()}</div>
+      ${order.tracking_number ? `<div style="margin-top:12px;background:rgba(42,122,75,.1);border:1px solid rgba(42,122,75,.3);padding:12px;color:#5AC882;font-size:12px">✅ Shipped — Tracking: ${order.tracking_number} via ${order.supplier||'—'}</div>` : ''}
+    `;
+
+    // Set CJ search link based on first item
+    const firstItem = order.order_items?.[0]?.name || '';
+    document.getElementById('OM-CJ').href = `https://cjdropshipping.com/list/wholesale-home-garden-furniture-l-52FC6CA5-669B-4D0B-B1AC-415675931399.html?q=${encodeURIComponent(firstItem)}`;
+    document.getElementById('OM-TRACK').value = order.tracking_number || '';
+
+    const modal = document.getElementById('ORDER-MODAL');
+    modal.style.display = 'flex';
+  } catch(e) { console.error(e); }
+}
+
+function closeOrderModal() {
+  document.getElementById('ORDER-MODAL').style.display = 'none';
+  currentOrder = null;
+}
+
+document.getElementById('OM-SHIP-BTN')?.addEventListener('click', async () => {
+  if (!currentOrder) return;
+  const tracking = document.getElementById('OM-TRACK').value.trim();
+  const supplier = document.getElementById('OM-SUPPLIER').value;
+  if (!tracking) { notif('Enter a tracking number first', 'error'); return; }
+
+  const load = document.getElementById('OM-LOAD');
+  load.classList.add('show');
+  try {
+    const data = await api(`/api/orders?action=status&id=${currentOrder.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'shipped', tracking_number: tracking, supplier })
+    });
+    if (data.error) { notif(data.error, 'error'); load.classList.remove('show'); return; }
+    notif('✅ Order marked shipped! Customer notified.', 'success');
+    load.classList.remove('show');
+    closeOrderModal();
+    loadOrders();
+  } catch(e) { load.classList.remove('show'); notif('Error updating order', 'error'); }
+});
 
 // ── PRODUCTS ────────────────────────────────────────────────────
 async function loadProducts() {
