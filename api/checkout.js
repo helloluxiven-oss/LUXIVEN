@@ -1,106 +1,118 @@
-const sb     = require('../lib/supabase');
-const cors   = require('../lib/cors');
+const sb   = require('../lib/supabase');
+const cors = require('../lib/cors');
 const { getUser } = require('../lib/auth');
-const Stripe = require('stripe');
+const https = require('https');
+const crypto = require('crypto');
+
+// Razorpay — create order
+async function createRazorpayOrder(amount, receipt) {
+  return new Promise((resolve, reject) => {
+    const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+    const body = JSON.stringify({ amount: Math.round(amount * 100), currency: 'INR', receipt });
+    const options = {
+      hostname: 'api.razorpay.com', path: '/v1/orders', method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}`, 'Content-Length': Buffer.byteLength(body) }
+    };
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+// Razorpay — verify signature
+function verifySignature(orderId, paymentId, signature) {
+  const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(orderId + '|' + paymentId).digest('hex');
+  return expected === signature;
+}
 
 module.exports = async (req, res) => {
   if (cors(req, res)) return;
-  if (req.method !== 'POST') return res.status(405).end();
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-04-10' });
-  const user   = await getUser(req);
+  // POST /api/checkout?action=create
+  if (req.method === 'POST' && req.query.action === 'create') {
+    const { items, shipping_address, guest_email, coupon_code } = req.body;
+    if (!items?.length) return res.status(422).json({ error: 'No items' });
 
-  const { items, couponCode, shippingAddress, guestEmail } = req.body;
-  if (!items?.length) return res.status(400).json({ error: 'Cart is empty' });
+    const ids = items.map(i => i.id);
+    const { data: products } = await sb.from('products').select('id,name,price,stock,images').in('id', ids);
+    if (!products?.length) return res.status(422).json({ error: 'Products not found' });
 
-  const email = guestEmail || (user ? (await sb.auth.admin.getUserById(user.id)).data.user?.email : null);
+    let subtotal = 0;
+    const orderItems = items.map(item => {
+      const p = products.find(x => x.id === item.id);
+      if (!p) return null;
+      const qty = parseInt(item.qty) || 1;
+      subtotal += p.price * qty;
+      return { id: p.id, name: p.name, price: p.price, qty, image: p.images?.[0] || '' };
+    }).filter(Boolean);
 
-  // Validate prices from DB — never trust client
-  const ids = items.map(i => i.productId);
-  const { data: products } = await sb.from('products')
-    .select('id,name,price,images,stock').in('id', ids).eq('is_active', true);
+    let discount = 0;
+    if (coupon_code) {
+      const { data: coupon } = await sb.from('coupons').select('*')
+        .eq('code', coupon_code.toUpperCase()).eq('is_active', true).single();
+      if (coupon) discount = coupon.type === 'percentage' ? subtotal * coupon.value / 100 : coupon.value;
+    }
 
-  let subtotal = 0;
-  const lineItems = [];
+    const shipping = subtotal >= 200 ? 0 : 15;
+    const total = Math.max(0, subtotal - discount + shipping);
+    const order_number = 'LUX-' + Date.now().toString(36).toUpperCase();
 
-  for (const item of items) {
-    const prod = products?.find(p => p.id === item.productId);
-    if (!prod) return res.status(400).json({ error: `Product not found: ${item.productId}` });
-    if (prod.stock < item.qty) return res.status(400).json({ error: `${prod.name} out of stock` });
-    subtotal += prod.price * item.qty;
-    lineItems.push({
-      price_data: {
-        currency: 'usd',
-        unit_amount: Math.round(prod.price * 100),
-        product_data: { name: prod.name, images: prod.images?.slice(0, 1).filter(Boolean) }
-      },
-      quantity: item.qty
+    const rzpOrder = await createRazorpayOrder(total, order_number);
+    if (rzpOrder.error) return res.status(400).json({ error: rzpOrder.error.description });
+
+    const user = await getUser(req);
+    const { data: order, error } = await sb.from('orders').insert({
+      order_number, user_id: user?.id || null, guest_email: guest_email || null,
+      status: 'pending', payment_status: 'pending', payment_method: 'razorpay',
+      razorpay_order_id: rzpOrder.id, subtotal, discount, shipping, total,
+      shipping_address, order_items: orderItems, created_at: new Date().toISOString()
+    }).select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    return res.json({
+      success: true, order_id: order.id, order_number,
+      razorpay_order_id: rzpOrder.id,
+      razorpay_key: process.env.RAZORPAY_KEY_ID,
+      amount: rzpOrder.amount, currency: 'INR',
+      total, subtotal, discount, shipping
     });
   }
 
-  // Apply coupon
-  let discountAmt = 0;
-  let stripeDiscounts = [];
-  if (couponCode) {
-    const { data: cpn } = await sb.from('coupons')
-      .select('*').eq('code', couponCode.toUpperCase()).eq('is_active', true).single();
-    if (cpn && subtotal >= cpn.min_order) {
-      discountAmt = cpn.type === 'percent'
-        ? Math.round(subtotal * cpn.value / 100)
-        : Math.min(cpn.value, subtotal);
-      const sc = await stripe.coupons.create({ amount_off: Math.round(discountAmt * 100), currency: 'usd', duration: 'once' });
-      stripeDiscounts = [{ coupon: sc.id }];
+  // POST /api/checkout?action=verify
+  if (req.method === 'POST' && req.query.action === 'verify') {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
+
+    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
+      return res.status(400).json({ error: 'Payment verification failed' });
     }
+
+    const { data: order, error } = await sb.from('orders').update({
+      payment_status: 'paid', status: 'processing',
+      razorpay_payment_id, razorpay_signature,
+      paid_at: new Date().toISOString()
+    }).eq('id', order_id).select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    // Reduce stock
+    for (const item of (order.order_items || [])) {
+      await sb.rpc('decrement_stock', { product_id: item.id, qty: item.qty }).catch(() => {});
+    }
+
+    // Clear cart
+    if (order.user_id) {
+      await sb.from('cart_items').delete().eq('user_id', order.user_id);
+    }
+
+    return res.json({ success: true, order_number: order.order_number, order });
   }
 
-  const shipping = subtotal >= 200 ? 0 : 15;
-  const tax      = Math.round((subtotal - discountAmt) * 0.08 * 100) / 100;
-  const total    = Math.round((subtotal - discountAmt + shipping + tax) * 100) / 100;
-
-  if (shipping > 0) lineItems.push({
-    price_data: { currency: 'usd', unit_amount: Math.round(shipping * 100), product_data: { name: 'Shipping' } },
-    quantity: 1
-  });
-  if (tax > 0) lineItems.push({
-    price_data: { currency: 'usd', unit_amount: Math.round(tax * 100), product_data: { name: 'Tax (8%)' } },
-    quantity: 1
-  });
-
-  // Create order in DB before Stripe session
-  const orderNum = `LUX-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-  const { data: order } = await sb.from('orders').insert({
-    order_number: orderNum,
-    user_id:      user?.id || null,
-    guest_email:  email,
-    status:       'pending',
-    payment_status: 'unpaid',
-    subtotal, discount: discountAmt, shipping, tax, total,
-    coupon_code:      couponCode || null,
-    shipping_address: shippingAddress
-  }).select().single();
-
-  await sb.from('order_items').insert(
-    items.map(item => {
-      const prod = products.find(p => p.id === item.productId);
-      return { order_id: order.id, product_id: prod.id, name: prod.name, image: prod.images?.[0], price: prod.price, qty: item.qty };
-    })
-  );
-
-  const SITE = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    customer_email: email,
-    line_items: lineItems,
-    discounts:  stripeDiscounts,
-    metadata:   { orderId: order.id, orderNumber: orderNum },
-    success_url: `${SITE}/?order=${orderNum}&status=success`,
-    cancel_url:  `${SITE}/?status=cancelled`,
-  });
-
-  await sb.from('orders').update({ stripe_session_id: session.id }).eq('id', order.id);
-
-  res.json({ url: session.url, orderNumber: orderNum });
+  res.status(405).json({ error: 'Method not allowed' });
 };
