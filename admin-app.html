@@ -39,9 +39,9 @@ a{color:inherit;text-decoration:none}
 .notif-dot{position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--gold);border-radius:50%;display:none}
 .notif-dot.on{display:block}
 .avatar{background:var(--gold);color:var(--bk);font-weight:700;font-size:13px}
-.page{display:none;padding-top:calc(env(safe-area-inset-top)+72px)}
+.page{display:none}.page.on{display:block;padding-top:68px}
 .page.on{display:block}
-.pi{padding:16px;padding-top:18px}
+.pi{padding:16px}
 .botnav{position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(10,8,6,.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
 .bnbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;gap:4px;background:none;border:none;color:var(--faint);font-size:9px;transition:color .2s;position:relative}
 .bnbtn.on{color:var(--gold)}
@@ -215,6 +215,11 @@ a{color:inherit;text-decoration:none}
 #TOAST.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #TOAST.ok{border-color:rgba(46,125,82,.4);color:#81C784}
 #TOAST.err{border-color:rgba(255,85,85,.3);color:#f77}
+
+@media(max-width:480px){
+  .page.on{padding-top:78px}
+  .topbar{padding-top:10px;padding-bottom:10px}
+}
 </style>
 </head>
 <body>
