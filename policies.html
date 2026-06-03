@@ -11,7 +11,12 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--ink:#0A0806;--ink2:#110E0A;--gold:#C9A96E;--cream:#F0E8D8;--dust:rgba(240,232,216,.72);--faint:rgba(240,232,216,.45);--border:rgba(201,169,110,.16);--sf:'Cormorant Garamond',Georgia,serif;--ss:'Montserrat',system-ui,sans-serif}
-html{background:var(--ink);scroll-behavior:smooth}
+html{background:var(--ink);scroll-behavior:auto}
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:rgba(10,8,6,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);margin:-64px -28px 40px}
+.back-lk{display:inline-flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust);transition:color .3s,gap .4s}
+.back-lk:hover{color:var(--gold);gap:14px;text-decoration:none}
+.back-lk svg{width:14px;height:14px}
+.topbar .tb-logo{font-family:var(--sf);font-style:italic;font-size:18px;color:var(--cream)}
 body{font-family:var(--ss);font-weight:300;color:var(--cream);line-height:1.8;font-size:15px}
 a{color:var(--gold);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -42,6 +47,11 @@ hr{border:none;border-top:1px solid var(--border);margin:0 0 64px}
 </head>
 <body>
 <div class="wrap">
+
+  <div class="topbar">
+    <a href="/" class="back-lk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Back to Store</a>
+    <a href="/" class="tb-logo">Luxiven</a>
+  </div>
 
   <div class="brand">Luxiven</div>
   <div class="brand-sub">Curated Luxury Home Decor</div>
@@ -188,5 +198,23 @@ hr{border:none;border-top:1px solid var(--border);margin:0 0 64px}
   </footer>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<script>
+var lenis;
+try{
+  lenis=new Lenis({duration:1.6,easing:function(t){return t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1},smoothWheel:true,wheelMultiplier:0.8,syncTouch:true,touchMultiplier:1.2});
+  function raf(t){lenis.raf(t);requestAnimationFrame(raf)}
+  requestAnimationFrame(raf);
+  // smooth anchor jumps (TOC, footer deep-links)
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var el=document.querySelector(this.getAttribute('href'));
+      if(el){e.preventDefault();lenis.scrollTo(el,{offset:-12,duration:1.4})}
+    });
+  });
+  // if arriving with a #hash from the footer, glide to it
+  if(location.hash){var t=document.querySelector(location.hash);if(t)setTimeout(function(){lenis.scrollTo(t,{offset:-12,duration:1.4,immediate:false})},120)}
+}catch(e){}
+</script>
 </body>
 </html>
