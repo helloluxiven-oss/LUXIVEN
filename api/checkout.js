@@ -4,11 +4,34 @@ const { getUser } = require('../lib/auth');
 const https = require('https');
 const crypto = require('crypto');
 
-// Razorpay — create order
-async function createRazorpayOrder(amount, receipt) {
+/* =========================================================================
+   CURRENCY CONFIG  — READ BEFORE DEPLOYING
+   -------------------------------------------------------------------------
+   1) BASE_CURRENCY = the currency your products.price column is stored in.
+      Your $ UI + "$200 free shipping" logic implies USD. CONFIRM THIS.
+      If your prices are actually in INR, set BASE_CURRENCY = 'INR'
+      and set RATES.INR = 1 (and express the others relative to INR).
+
+   2) RATES = how BASE converts to each currency you charge in.
+      These are EDITABLE price multipliers, not live FX. Tune them to
+      clean price points if you want (luxury pricing), or keep ~FX.
+      Razorpay supports (from India): USD SGD AUD CAD EUR GBP HKD INR MYR.
+      AED / others are NOT supported -> we coerce to USD.
+   ========================================================================= */
+const BASE_CURRENCY = 'USD';
+const SUPPORTED = ['USD','GBP','EUR','AUD','CAD','SGD','HKD','MYR','INR'];
+const RATES = { USD:1, GBP:0.80, EUR:0.92, AUD:1.52, CAD:1.36, SGD:1.34, HKD:7.80, MYR:4.70, INR:83 };
+
+function pickCurrency(requested) {
+  const c = String(requested || BASE_CURRENCY).toUpperCase();
+  return SUPPORTED.includes(c) ? c : 'USD';   // unsupported -> USD
+}
+
+// Razorpay — create order (currency-aware)
+async function createRazorpayOrder(amountMinor, currency, receipt) {
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
-    const body = JSON.stringify({ amount: Math.round(amount * 100), currency: 'INR', receipt });
+    const body = JSON.stringify({ amount: amountMinor, currency, receipt });
     const options = {
       hostname: 'api.razorpay.com', path: '/v1/orders', method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}`, 'Content-Length': Buffer.byteLength(body) }
@@ -36,13 +59,18 @@ module.exports = async (req, res) => {
 
   // POST /api/checkout?action=create
   if (req.method === 'POST' && req.query.action === 'create') {
-    const { items, shipping_address, guest_email, coupon_code } = req.body;
+    const { items, shipping_address, guest_email, coupon_code, currency: reqCurrency } = req.body;
     if (!items?.length) return res.status(422).json({ error: 'No items' });
+
+    // Currency the buyer will be charged in (validated server-side; never trust blindly)
+    const currency = pickCurrency(reqCurrency);
+    const rate = RATES[currency] || 1;
 
     const ids = items.map(i => i.id);
     const { data: products } = await sb.from('products').select('id,name,price,stock,images').in('id', ids);
     if (!products?.length) return res.status(422).json({ error: 'Products not found' });
 
+    // ---- All math in BASE_CURRENCY (server is source of truth for price) ----
     let subtotal = 0;
     const orderItems = items.map(item => {
       const p = products.find(x => x.id === item.id);
@@ -59,18 +87,24 @@ module.exports = async (req, res) => {
       if (coupon) discount = coupon.type === 'percentage' ? subtotal * coupon.value / 100 : coupon.value;
     }
 
-    const shipping = subtotal >= 200 ? 0 : 15;
-    const total = Math.max(0, subtotal - discount + shipping);
+    const shipping = subtotal >= 200 ? 0 : 15;             // BASE_CURRENCY thresholds
+    const totalBase = Math.max(0, subtotal - discount + shipping);
+
+    // ---- Convert to charge currency ----
+    const totalCharged = currency === BASE_CURRENCY ? totalBase : totalBase * rate;
+    const amountMinor  = Math.round(totalCharged * 100);   // paise/cents (all supported currencies use 2 decimals)
+
     const order_number = 'LUX-' + Date.now().toString(36).toUpperCase();
 
-    const rzpOrder = await createRazorpayOrder(total, order_number);
+    const rzpOrder = await createRazorpayOrder(amountMinor, currency, order_number);
     if (rzpOrder.error) return res.status(400).json({ error: rzpOrder.error.description });
 
     const user = await getUser(req);
     const { data: order, error } = await sb.from('orders').insert({
       order_number, user_id: user?.id || null, guest_email: guest_email || null,
       status: 'pending', payment_status: 'pending', payment_method: 'razorpay',
-      razorpay_order_id: rzpOrder.id, subtotal, discount, shipping, total,
+      razorpay_order_id: rzpOrder.id, subtotal, discount, shipping, total: totalBase,
+      currency, charged_total: totalCharged,                // <-- needs DB columns (SQL below)
       shipping_address, order_items: orderItems, created_at: new Date().toISOString()
     }).select().single();
 
@@ -80,8 +114,8 @@ module.exports = async (req, res) => {
       success: true, order_id: order.id, order_number,
       razorpay_order_id: rzpOrder.id,
       razorpay_key: process.env.RAZORPAY_KEY_ID,
-      amount: rzpOrder.amount, currency: 'INR',
-      total, subtotal, discount, shipping
+      amount: rzpOrder.amount, currency,                    // <-- send real currency to checkout
+      total: totalBase, subtotal, discount, shipping
     });
   }
 
@@ -101,12 +135,10 @@ module.exports = async (req, res) => {
 
     if (error) return res.status(400).json({ error: error.message });
 
-    // Reduce stock
     for (const item of (order.order_items || [])) {
       await sb.rpc('decrement_stock', { product_id: item.id, qty: item.qty }).catch(() => {});
     }
 
-    // Clear cart
     if (order.user_id) {
       await sb.from('cart_items').delete().eq('user_id', order.user_id);
     }

@@ -624,7 +624,28 @@ if(!rm){gsap.to('.cta-bg img',{yPercent:10,ease:'none',scrollTrigger:{trigger:'#
 var API_BASE='';
 var TOKEN=localStorage.getItem('lux_token')||null;
 function api(m,p,b){var o={method:m,headers:{'Content-Type':'application/json'}};if(TOKEN)o.headers['Authorization']='Bearer '+TOKEN;if(b)o.body=JSON.stringify(b);return fetch(API_BASE+'/api'+p,o).then(function(r){return r.json()})}
-function fmt(n){return '$'+parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}
+/* ---- CURRENCY (keep RATES + COUNTRY_CUR identical to /api/checkout.js) ---- */
+var SUPPORTED=['USD','GBP','EUR','AUD','CAD','SGD','HKD','MYR','INR'];
+var COUNTRY_CUR={IN:'INR',US:'USD',GB:'GBP',AU:'AUD',CA:'CAD',SG:'SGD',HK:'HKD',MY:'MYR',DE:'EUR',FR:'EUR',IT:'EUR',ES:'EUR',NL:'EUR',IE:'EUR',AE:'USD',SA:'USD',QA:'USD',KW:'USD'};
+var RATES={USD:1,GBP:0.80,EUR:0.92,AUD:1.52,CAD:1.36,SGD:1.34,HKD:7.80,MYR:4.70,INR:83};
+var CUR='USD',RATE=1;
+function pickCur(cc){var w=COUNTRY_CUR[cc]||'USD';return SUPPORTED.indexOf(w)===-1?'USD':w}
+/* fmt() takes a USD base number, converts to detected currency, formats */
+function fmt(n){var v=(parseFloat(n||0))*RATE;try{return new Intl.NumberFormat(undefined,{style:'currency',currency:CUR,maximumFractionDigits:0}).format(v)}catch(e){return CUR+' '+Math.round(v)}}
+function relabelPrices(){
+  document.querySelectorAll('.prod-pr').forEach(function(el){
+    if(!el.dataset.usd){var n=parseFloat((el.textContent||'').replace(/[^0-9.]/g,''));if(!isNaN(n))el.dataset.usd=n}
+    if(el.dataset.usd)el.textContent=fmt(parseFloat(el.dataset.usd));
+  });
+  if(typeof renderCart==='function')renderCart();
+}
+function setCur(cc){CUR=pickCur(cc);RATE=RATES[CUR]||1;relabelPrices()}
+(function detectCur(){
+  fetch('https://ipapi.co/json/').then(function(r){return r.json()}).then(function(d){setCur(d&&d.country_code?d.country_code:'US')}).catch(function(){
+    var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+    setCur(tz.indexOf('Kolkata')>-1?'IN':tz.indexOf('London')>-1?'GB':tz.indexOf('Australia')>-1?'AU':'US');
+  });
+})();
 var S={user:JSON.parse(localStorage.getItem('lux_user')||'null'),cart:JSON.parse(localStorage.getItem('lux_cart')||'[]'),wl:[],disc:0,couponCode:''};
 var P=[
   {id:'p1',pid:'p1',name:'Velvet Meridian Sofa',price:2490,img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'},
@@ -683,7 +704,7 @@ document.getElementById('COF').addEventListener('submit',function(e){
   e.preventDefault();var btn=document.getElementById('COPL');btn.disabled=true;btn.textContent='Processing…';
   var addr={firstName:document.getElementById('COF1').value,lastName:document.getElementById('COL1').value,address:document.getElementById('COA1').value,city:document.getElementById('COC1').value,zip:document.getElementById('COZ1').value,email:document.getElementById('COE1').value};
   var items=S.cart.map(function(i){return{id:i.pid||i.id,qty:i.qty}});
-  api('POST','/checkout?action=create',{items:items,coupon_code:null,shipping_address:addr,guest_email:S.user?null:addr.email}).then(function(res){
+  api('POST','/checkout?action=create',{items:items,coupon_code:null,shipping_address:addr,guest_email:S.user?null:addr.email,currency:CUR}).then(function(res){
     if(!res.razorpay_order_id)throw new Error(res.error||'Payment init failed');
     var sc=document.createElement('script');sc.src='https://checkout.razorpay.com/v1/checkout.js';
     sc.onload=function(){new window.Razorpay({key:res.razorpay_key,amount:res.amount,currency:res.currency||'INR',name:'Luxiven',description:'Luxury Home Collection',order_id:res.razorpay_order_id,prefill:{name:addr.firstName+' '+addr.lastName,email:addr.email},theme:{color:'#C9A96E'},modal:{ondismiss:function(){btn.disabled=false;btn.textContent='Complete Order'}},handler:function(pay){api('POST','/checkout?action=verify',{razorpay_order_id:pay.razorpay_order_id,razorpay_payment_id:pay.razorpay_payment_id,razorpay_signature:pay.razorpay_signature,order_id:res.order_id}).then(function(vr){if(vr.success){S.cart=[];saveL();updB();btn.disabled=false;btn.textContent='Complete Order';closeCO();document.getElementById('SUCN').textContent=vr.order_number;document.getElementById('SUC').classList.add('on')}else{alert('Verification failed.');btn.disabled=false;btn.textContent='Complete Order'}})}}).open()};
