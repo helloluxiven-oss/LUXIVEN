@@ -340,7 +340,10 @@ a{color:inherit;text-decoration:none}
 
   <!-- SUPPLIERS -->
   <div class="page" id="PAGE_SUPPLIERS"><div class="pi">
-    <div class="sec-title">Active Suppliers</div>
+    <div class="sec-title">Live CJ Product Search</div>
+    <div class="srch-wrap"><input class="srch-inp" id="CJ_Q" placeholder="Search CJ products e.g. ceramic vase..." onkeydown="if(event.key==='Enter')cjSearch()"><button class="btn-sm gold" style="flex-shrink:0" onclick="cjSearch()">Search</button></div>
+    <div id="CJ_RES"><div style="text-align:center;padding:20px;color:var(--faint);font-size:12px">Search CJ's live catalog. Costs and images pulled in real time.</div></div>
+    <div class="sec-title" style="margin-top:18px">Active Suppliers</div>
     <div class="sup-card"><div class="sup-head"><div class="sup-logo" style="background:rgba(201,169,110,.1);color:var(--gold)">CJ</div><div style="flex:1"><div class="sup-name">CJDropshipping</div><div class="sup-sub">Main supplier - 7-15 day shipping</div></div><span class="badge badge-active">Active</span></div><div class="sup-links"><a href="https://cjdropshipping.com" target="_blank" class="sup-link">Home Dashboard</a><a href="https://cjdropshipping.com/list/search?keyword=luxury+home+decor" target="_blank" class="sup-link">Search Products</a><a href="https://cjdropshipping.com/login.html" target="_blank" class="sup-link">Login</a><a href="https://cjdropshipping.com" target="_blank" class="sup-link">Dashboard</a></div></div>
     <div class="sup-card"><div class="sup-head"><div class="sup-logo" style="background:rgba(64,169,255,.08);color:#64B5F6">TD</div><div style="flex:1"><div class="sup-name">TeemDrop</div><div class="sup-sub">Premium quality - Better QC</div></div><span class="badge badge-active">Active</span></div><div class="sup-links"><a href="https://seller.teemdrop.com" target="_blank" class="sup-link">Dashboard</a><a href="https://seller.teemdrop.com/products" target="_blank" class="sup-link">Search Products</a><a href="https://seller.teemdrop.com/orders" target="_blank" class="sup-link">Orders</a><a href="https://seller.teemdrop.com/finance" target="_blank" class="sup-link">Finance</a></div></div>
     <div class="sup-card"><div class="sup-head"><div class="sup-logo" style="background:rgba(255,102,0,.08);color:#FF8A50">ALI</div><div style="flex:1"><div class="sup-name">Alibaba</div><div class="sup-sub">Bulk sourcing - MOQ applies</div></div></div><div class="sup-links"><a href="https://alibaba.com/trade/search?SearchText=luxury+home+decor" target="_blank" class="sup-link">Search Products</a><a href="https://alibaba.com" target="_blank" class="sup-link">Homepage</a></div></div>
@@ -514,6 +517,44 @@ function searchImgs(){const q=document.getElementById("IMG_Q").value.trim();if(!
 function selImg(url,el){document.querySelectorAll(".img-item").forEach(i=>i.classList.remove("sel"));el.classList.add("sel");document.getElementById("IMG_SEL_URL").value=url;document.getElementById("IMG_SEL_ROW").style.display="block";const iurl=document.getElementById("IURL");if(iurl){iurl.value=url;upImg=url;prevImg()}toast("Image selected","ok")}
 function copyImgU(){const u=document.getElementById("IMG_SEL_URL").value;if(u)navigator.clipboard.writeText(u).then(()=>toast("URL copied","ok"))}
 function addSup(){const n=document.getElementById("SUP_NAME").value.trim();if(!n){toast("Enter supplier name","err");return}toast("Supplier "+n+" saved","ok");["SUP_NAME","SUP_URL","SUP_NOTES"].forEach(id=>document.getElementById(id).value="")}
+// ---- LIVE CJ SEARCH ----
+function cjLowCost(c){ // CJ cost can be "13.27 -- 32.34" or "9.78" -> return low number
+  if(c==null)return null;
+  var m=String(c).match(/[0-9]+(\.[0-9]+)?/g);
+  return m&&m.length?parseFloat(m[0]):null;
+}
+async function cjSearch(){
+  var q=document.getElementById("CJ_Q").value.trim();
+  if(!q){toast("Enter a search term","err");return}
+  var box=document.getElementById("CJ_RES");
+  box.innerHTML="<div class=\"loader\"><div class=\"spin\"></div></div>";
+  try{
+    var r=await fetch("/api/cj?action=search&q="+encodeURIComponent(q));
+    var d=await r.json();
+    if(!d.ok||!d.products||!d.products.length){box.innerHTML="<div style=\"text-align:center;padding:20px;color:var(--faint);font-size:12px\">No products found. Try a different term.</div>";return}
+    box.innerHTML=d.products.map(function(p){
+      var low=cjLowCost(p.cost);
+      var costTxt=p.cost!=null?String(p.cost):"-";
+      var costAttr=low!=null?low:"";
+      return "<div class=\"prod-card\"><div class=\"prod-card-img\">"+(p.image?"<img src=\""+p.image+"\" loading=\"lazy\" onerror=\"this.style.display='none'\">":"")+"</div><div class=\"prod-card-body\"><div class=\"prod-card-cat\">"+(p.category||"")+"</div><div style=\"font-size:13px;color:var(--cream);margin-bottom:4px;line-height:1.3\">"+p.name+"</div><div class=\"prod-price\">$"+costTxt+"<span style=\"font-size:9px;color:var(--faint);margin-left:6px\">CJ cost</span></div><div class=\"prod-actions\"><button class=\"btn-sm gold\" onclick=\"cjToMargin('"+costAttr+"')\">&rarr; Margin</button><button class=\"btn-sm og\" onclick=\"window.open('https://cjdropshipping.com/product-detail?id="+encodeURIComponent(p.pid)+"','_blank')\">View on CJ</button></div></div></div>";
+    }).join("");
+    toast(d.count+" products found","ok");
+  }catch(e){box.innerHTML="<div style=\"text-align:center;padding:20px;color:#f77;font-size:12px\">Search failed. Try again.</div>"}
+}
+function cjToMargin(cost){
+  if(!cost){toast("No cost on this item","err");return}
+  gp("ai");
+  setTimeout(function(){
+    document.querySelectorAll(".ai-tab").forEach(t=>t.classList.remove("on"));
+    document.querySelectorAll(".ai-panel").forEach(p=>p.classList.remove("on"));
+    var tab=document.querySelector("[data-ai='pricing']");if(tab)tab.classList.add("on");
+    var pan=document.getElementById("AI_pricing");if(pan)pan.classList.add("on");
+    document.getElementById("PI_COST").value=cost;
+    document.getElementById("PI_SELL").focus();
+    calcM();
+    toast("Cost $"+cost+" loaded - enter your sell price","ok");
+  },150);
+}
 function openM(id){const el=document.getElementById(id);if(el)el.classList.add("on")}
 function closeM(id){const el=document.getElementById(id);if(el)el.classList.remove("on")}
 document.querySelectorAll(".modal-ov").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("on")}));
