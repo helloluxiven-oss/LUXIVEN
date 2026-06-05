@@ -536,10 +536,19 @@ async function cjSearch(){
       var low=cjLowCost(p.cost);
       var costTxt=p.cost!=null?String(p.cost):"-";
       var costAttr=low!=null?low:"";
-      return "<div class=\"prod-card\"><div class=\"prod-card-img\">"+(p.image?"<img src=\""+p.image+"\" loading=\"lazy\" onerror=\"this.style.display='none'\">":"")+"</div><div class=\"prod-card-body\"><div class=\"prod-card-cat\">"+(p.category||"")+"</div><div style=\"font-size:13px;color:var(--cream);margin-bottom:4px;line-height:1.3\">"+p.name+"</div><div class=\"prod-price\">$"+costTxt+"<span style=\"font-size:9px;color:var(--faint);margin-left:6px\">CJ cost</span></div><div class=\"prod-actions\"><button class=\"btn-sm gold\" onclick=\"cjToMargin('"+costAttr+"')\">&rarr; Margin</button><button class=\"btn-sm og\" onclick=\"window.open('https://cjdropshipping.com/product-detail?id="+encodeURIComponent(p.pid)+"','_blank')\">View on CJ</button></div></div></div>";
+      return "<div class=\"prod-card\"><div class=\"prod-card-img\">"+(p.image?"<img src=\""+p.image+"\" loading=\"lazy\" onerror=\"this.style.display='none'\">":"")+"</div><div class=\"prod-card-body\"><div class=\"prod-card-cat\">"+(p.category||"")+"</div><div style=\"font-size:13px;color:var(--cream);margin-bottom:4px;line-height:1.3\">"+p.name+"</div><div class=\"prod-price\">$"+costTxt+"<span style=\"font-size:9px;color:var(--faint);margin-left:6px\">CJ cost"+(p.sku?" &middot; "+p.sku:"")+"</span></div><div class=\"prod-actions\"><button class=\"btn-sm gold\" onclick=\"cjToMargin('"+costAttr+"')\">&rarr; Margin</button><button class=\"btn-sm og\" onclick=\"cjOpen('"+(p.sku||"")+"','"+encodeURIComponent(p.name)+"')\">Find on CJ</button><button class=\"btn-sm\" onclick=\"cjCopy('"+encodeURIComponent(p.name)+"')\">Copy name</button></div></div></div>";
     }).join("");
     toast(d.count+" products found","ok");
   }catch(e){box.innerHTML="<div style=\"text-align:center;padding:20px;color:#f77;font-size:12px\">Search failed. Try again.</div>"}
+}
+function cjOpen(sku,nameEnc){
+  // CJ has no reliable per-product URL in the API, but searching the SKU lands on the exact item.
+  var term=sku||decodeURIComponent(nameEnc||"");
+  window.open("https://cjdropshipping.com/list/search?keyword="+encodeURIComponent(term),"_blank");
+}
+function cjCopy(nameEnc){
+  var name=decodeURIComponent(nameEnc||"");
+  navigator.clipboard.writeText(name).then(function(){toast("Name copied - paste into CJ search","ok")}).catch(function(){toast("Copy failed","err")});
 }
 function cjToMargin(cost){
   if(!cost){toast("No cost on this item","err");return}
