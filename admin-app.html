@@ -536,19 +536,22 @@ async function cjSearch(){
       var low=cjLowCost(p.cost);
       var costTxt=p.cost!=null?String(p.cost):"-";
       var costAttr=low!=null?low:"";
-      return "<div class=\"prod-card\"><div class=\"prod-card-img\">"+(p.image?"<img src=\""+p.image+"\" loading=\"lazy\" onerror=\"this.style.display='none'\">":"")+"</div><div class=\"prod-card-body\"><div class=\"prod-card-cat\">"+(p.category||"")+"</div><div style=\"font-size:13px;color:var(--cream);margin-bottom:4px;line-height:1.3\">"+p.name+"</div><div class=\"prod-price\">$"+costTxt+"<span style=\"font-size:9px;color:var(--faint);margin-left:6px\">CJ cost"+(p.sku?" &middot; "+p.sku:"")+"</span></div><div class=\"prod-actions\"><button class=\"btn-sm gold\" onclick='cjToStore("+JSON.stringify({n:p.name,img:p.image||"",c:costAttr})+")'>+ List</button><button class=\"btn-sm og\" onclick=\"cjToMargin('"+costAttr+"')\">&rarr; Margin</button><button class=\"btn-sm\" onclick=\"cjOpen('"+(p.sku||"")+"','"+encodeURIComponent(p.name)+"')\">Find on CJ</button></div></div></div>";
+      return "<div class=\"prod-card\"><div class=\"prod-card-img\">"+(p.image?"<img src=\""+p.image+"\" loading=\"lazy\" onerror=\"this.style.display='none'\">":"")+"</div><div class=\"prod-card-body\"><div class=\"prod-card-cat\">"+(p.category||"")+"</div><div style=\"font-size:13px;color:var(--cream);margin-bottom:4px;line-height:1.3\">"+p.name+"</div><div class=\"prod-price\">$"+costTxt+"<span style=\"font-size:9px;color:var(--faint);margin-left:6px\">CJ cost"+(p.sku?" &middot; "+p.sku:"")+"</span></div><div class=\"prod-actions\"><button class=\"btn-sm gold\" onclick='cjToStore("+JSON.stringify({n:p.name,img:p.image||"",c:costAttr})+")'>+ List</button><button class=\"btn-sm og\" onclick=\"cjToMargin('"+costAttr+"')\">&rarr; Margin</button><button class=\"btn-sm\" onclick=\"cjOpen('"+(p.sku||"")+"','"+encodeURIComponent(p.name)+"')\">Find on CJ</button>"+(p.sku?"<button class=\"btn-sm\" onclick=\"cjCopySku('"+p.sku+"')\">Copy SKU</button>":"")+"</div></div></div>";
     }).join("");
     toast(d.count+" products found","ok");
   }catch(e){box.innerHTML="<div style=\"text-align:center;padding:20px;color:#f77;font-size:12px\">Search failed. Try again.</div>"}
 }
 function cjOpen(sku,nameEnc){
-  // CJ has no reliable per-product URL in the API, but searching the SKU lands on the exact item.
+  // CJ API gives no per-product URL. SKU is the exact-match key — copy it so you can paste
+  // into CJ search if the auto-search lands on a list. Search by SKU when we have one.
   var term=sku||decodeURIComponent(nameEnc||"");
+  if(sku){ try{ navigator.clipboard.writeText(sku); }catch(e){} }
   window.open("https://cjdropshipping.com/list/search?keyword="+encodeURIComponent(term),"_blank");
+  toast(sku?("SKU "+sku+" copied - paste in CJ search if needed"):"Opening CJ search","ok");
 }
-function cjCopy(nameEnc){
-  var name=decodeURIComponent(nameEnc||"");
-  navigator.clipboard.writeText(name).then(function(){toast("Name copied - paste into CJ search","ok")}).catch(function(){toast("Copy failed","err")});
+function cjCopySku(sku){
+  if(!sku){toast("No SKU on this item","err");return}
+  navigator.clipboard.writeText(sku).then(function(){toast("SKU "+sku+" copied - paste into CJ search","ok")}).catch(function(){toast("Copy failed","err")});
 }
 function cjSuggestPrice(cost){
   // landed cost approx = CJ low cost + ~$7 shipping; luxury markup ~3.2x of cost, rounded to clean point
