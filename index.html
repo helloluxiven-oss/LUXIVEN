@@ -373,77 +373,12 @@ body.hov #CRING{box-shadow:0 0 16px rgba(201,169,110,.4)}
 
 <!-- PRODUCTS -->
 <section id="PRODS">
-  <div class="prod">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=90" alt="Velvet Sofa" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">01</span>
-      <span class="prod-loc">Living Room · Signature Piece</span>
-      <div class="prod-nm">Velvet<br>Meridian Sofa</div>
-      <div class="prod-cat">Hand-stitched Italian velvet · Solid walnut frame</div>
-      <div class="prod-pr">$2,490</div>
-      <a href="#" class="prod-cta" onclick="addCart('p1');return false">Enter the Residence →</a>
-    </div>
-  </div>
-  <div class="prod rev">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=900&q=90" alt="Marble Table" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">02</span>
-      <span class="prod-loc">Living Room · Centrepiece</span>
-      <div class="prod-nm">Aurel Marble<br>Coffee Table</div>
-      <div class="prod-cat">Carrara marble · Brushed brass base</div>
-      <div class="prod-pr">$1,890</div>
-      <a href="#" class="prod-cta" onclick="addCart('p2');return false">Enter the Residence →</a>
-    </div>
-  </div>
-  <div class="prod">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=900&q=90" alt="Floor Lamp" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">03</span>
-      <span class="prod-loc">Lighting · Arc Collection</span>
-      <div class="prod-nm">Nordic Arc<br>Floor Lamp</div>
-      <div class="prod-cat">Matte black steel · Handwoven linen shade</div>
-      <div class="prod-pr">$680</div>
-      <a href="#" class="prod-cta" onclick="addCart('p3');return false">Enter the Residence →</a>
-    </div>
-  </div>
-  <div class="prod rev">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=900&q=90" alt="Platform Bed" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">04</span>
-      <span class="prod-loc">Bedroom · Signature Piece</span>
-      <div class="prod-nm">Sable<br>Platform Bed</div>
-      <div class="prod-cat">Hand-smoked solid oak · Shou Sugi Ban</div>
-      <div class="prod-pr">$3,200</div>
-      <a href="#" class="prod-cta" onclick="addCart('p4');return false">Enter the Residence →</a>
-    </div>
-  </div>
-  <div class="prod">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=900&q=90" alt="Vase" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">05</span>
-      <span class="prod-loc">Decor · Limited Edition</span>
-      <div class="prod-nm">Onyx Vessel<br>Vase</div>
-      <div class="prod-cat">Hand-thrown stoneware · Reactive onyx glaze</div>
-      <div class="prod-pr">$340</div>
-      <a href="#" class="prod-cta" onclick="addCart('p6');return false">Enter the Residence →</a>
-    </div>
-  </div>
-  <div class="prod rev">
-    <div class="prod-img"><img src="https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=900&q=90" alt="Linen Bedding" loading="lazy"></div>
-    <div class="prod-tx">
-      <span class="prod-n">06</span>
-      <span class="prod-loc">Bedroom · Comfort Object</span>
-      <div class="prod-nm">Linen Cloud<br>Bedding Set</div>
-      <div class="prod-cat">100% French linen · Stone-washed 12 times</div>
-      <div class="prod-pr">$380</div>
-      <a href="#" class="prod-cta" onclick="addCart('p7');return false">Enter the Residence →</a>
-    </div>
-  </div>
+  <div id="PGRID"></div>
 </section>
 
 <!-- STATS -->
 <div id="STATS">
-  <div class="stat"><strong class="stat-n cnt" data-t="18">0</strong><span class="stat-l">Objects Curated</span></div>
+  <div class="stat"><strong class="stat-n cnt" id="STAT_OBJ" data-t="1">0</strong><span class="stat-l">Objects Curated</span></div>
   <div class="stat"><strong class="stat-n cnt" data-t="50">0</strong><span class="stat-l">Artisan Partners</span></div>
   <div class="stat"><strong class="stat-n cnt" data-t="12">0</strong><span class="stat-l">Room Collections</span></div>
   <div class="stat"><strong class="stat-n">30<span style="font-size:.5em">day</span></strong><span class="stat-l">Return Guarantee</span></div>
@@ -594,11 +529,16 @@ gsap.to('.mani-tag',{opacity:1,duration:1,scrollTrigger:{trigger:'#MANI',start:'
 gsap.to('#MANI .mani-h .ln span',{y:0,duration:1.6,stagger:.18,ease:'power4.out',scrollTrigger:{trigger:'#MANI',start:'top 75%',once:true}});
 
 /* PRODUCTS */
-document.querySelectorAll('.prod').forEach(function(item){
-  var isRev=item.classList.contains('rev');
-  gsap.from(item.querySelector('.prod-tx'),{opacity:0,x:isRev?-50:50,duration:1.3,ease:'power3.out',scrollTrigger:{trigger:item,start:'top 75%',once:true}});
-  if(!rm){gsap.to(item.querySelector('.prod-img img'),{yPercent:-8,ease:'none',scrollTrigger:{trigger:item,start:'top bottom',end:'bottom top',scrub:1.5}})}
-});
+function animateProducts(){
+  document.querySelectorAll('.prod').forEach(function(item){
+    if(item._anim)return;item._anim=true;
+    var isRev=item.classList.contains('rev');
+    gsap.from(item.querySelector('.prod-tx'),{opacity:0,x:isRev?-50:50,duration:1.3,ease:'power3.out',scrollTrigger:{trigger:item,start:'top 80%',once:true}});
+    if(!rm){gsap.to(item.querySelector('.prod-img img'),{yPercent:-8,ease:'none',scrollTrigger:{trigger:item,start:'top bottom',end:'bottom top',scrub:1.5}})}
+  });
+  if(typeof ScrollTrigger!=='undefined')ScrollTrigger.refresh();
+}
+animateProducts();
 
 /* STATS */
 document.querySelectorAll('.cnt').forEach(function(el){
@@ -647,15 +587,32 @@ function setCur(cc){CUR=pickCur(cc);RATE=RATES[CUR]||1;relabelPrices()}
   });
 })();
 var S={user:JSON.parse(localStorage.getItem('lux_user')||'null'),cart:JSON.parse(localStorage.getItem('lux_cart')||'[]'),wl:[],disc:0,couponCode:''};
-var P=[
-  {id:'p1',pid:'p1',name:'Velvet Meridian Sofa',price:2490,img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'},
-  {id:'p2',pid:'p2',name:'Aurel Marble Coffee Table',price:1890,img:'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400&q=80'},
-  {id:'p3',pid:'p3',name:'Nordic Arc Floor Lamp',price:680,img:'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=400&q=80'},
-  {id:'p4',pid:'p4',name:'Sable Platform Bed',price:3200,img:'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=400&q=80'},
-  {id:'p6',pid:'p6',name:'Onyx Vessel Vase',price:340,img:'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=400&q=80'},
-  {id:'p7',pid:'p7',name:'Linen Cloud Bedding Set',price:380,img:'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=400&q=80'}
-];
-api('GET','/products?limit=50').then(function(res){if(res.data&&res.data.length){P=res.data.map(function(p){return{id:p.id,pid:p.id,name:p.name,price:p.price,was:p.compare_price||null,img:p.images&&p.images[0]||''}});}}).catch(function(){});
+var P=[];
+function renderProducts(list){
+  var g=document.getElementById('PGRID');if(!g)return;
+  if(!list||!list.length){g.innerHTML='<div style="padding:120px 24px;text-align:center;color:var(--faint);font-size:13px;letter-spacing:.2em;text-transform:uppercase">The collection is being curated. Check back soon.</div>';return}
+  g.innerHTML=list.map(function(p,i){
+    var rev=(i%2===1)?' rev':'';
+    var n=String(i+1);if(n.length<2)n='0'+n;
+    var img=(p.images&&p.images[0])||p.img||'';
+    var cat=(p.category||'Decor');
+    var desc=p.short_desc||p.description||'';
+    if(desc&&desc.length>90)desc=desc.slice(0,90)+'\u2026';
+    var pr='<div class="prod-pr" data-usd="'+p.price+'">'+fmt(p.price)+'</div>';
+    return '<div class="prod'+rev+'">'+
+      '<div class="prod-img"><img src="'+img+'" alt="'+(p.name||'')+'" loading="lazy"></div>'+
+      '<div class="prod-tx">'+
+        '<span class="prod-n">'+n+'</span>'+
+        '<span class="prod-loc">'+cat+' \u00b7 Curated</span>'+
+        '<div class="prod-nm">'+(p.name||'')+'</div>'+
+        '<div class="prod-cat">'+desc+'</div>'+
+        pr+
+        '<a href="#" class="prod-cta" onclick="addCart(\''+p.id+'\');return false">Add to Collection \u2192</a>'+
+      '</div></div>';
+  }).join('');
+  if(typeof animateProducts==='function')setTimeout(animateProducts,50);
+}
+api('GET','/products?limit=50').then(function(res){if(res.data&&res.data.length){P=res.data.map(function(p){return{id:p.id,pid:p.id,name:p.name,price:p.price,was:p.compare_price||null,img:p.images&&p.images[0]||''}});renderProducts(res.data);var so=document.getElementById('STAT_OBJ');if(so)so.setAttribute('data-t',res.data.length);if(typeof relabelPrices==='function')relabelPrices()}else{renderProducts([])}}).catch(function(){renderProducts([])});
 
 function saveL(){localStorage.setItem('lux_cart',JSON.stringify(S.cart))}
 function updB(){var n=S.cart.reduce(function(s,i){return s+i.qty},0);var b=document.getElementById('CB');if(b){b.textContent=n;b.classList.toggle('on',n>0)}document.getElementById('CCN').textContent=n}
