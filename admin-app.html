@@ -431,7 +431,7 @@ const AK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 let TK=localStorage.getItem("lx_tk")||null,USR=JSON.parse(localStorage.getItem("lx_usr")||"null");
 let allOrds=[],allProds=[],curOrdId=null,editPId=null,upImg=null,curPF="all",curOF="all";
 async function supa(m,tbl,q,body){
-  var BT=(TK&&typeof TK==="string"&&TK.split(".").length===3)?TK:AK;
+  var BT=(TK&&typeof TK==="string"&&TK.split(".").length===3)?TK:AK; // real session token carries admin identity for RLS writes
   try{const r=await fetch(SUPA+"/rest/v1/"+tbl+"?"+(q||""),{method:m,headers:{"apikey":AK,"Authorization":"Bearer "+BT,"Content-Type":"application/json","Prefer":"return=representation"},body:body?JSON.stringify(body):undefined});const t=await r.text();if(!r.ok){window._lastSupaErr=t||("HTTP "+r.status);return null}return t?JSON.parse(t):[]}catch(e){window._lastSupaErr=String(e&&e.message||e);return null}
 }
 function fmt(n){return"$"+parseFloat(n||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}
@@ -443,7 +443,7 @@ document.getElementById("LBTN").onclick=async()=>{
   const err=document.getElementById("LERR"),btn=document.getElementById("LBTN");
   if(!e||!p){err.textContent="Enter email and password";return}
   btn.innerHTML="<span class=\"spin\"></span>";
-  try{const r=await fetch("/api/auth?action=login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})});const d=await r.json();if(!d.error&&(d.token||d.user)){TK=d.token||"s";USR=d.user||{first_name:"Kartikay"};save();start();return}}catch(x){}
+  // Real Supabase session FIRST — produces a valid JWT carrying admin identity for RLS
   try{const r=await fetch(SUPA+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":AK},body:JSON.stringify({email:e,password:p})});const d=await r.json();if(d.access_token){TK=d.access_token;USR={first_name:"Kartikay",email:e};save();start();return}}catch(x){}
   btn.textContent="Sign In";err.textContent="Invalid credentials";
 };
