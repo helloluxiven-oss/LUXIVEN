@@ -431,7 +431,8 @@ const AK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 let TK=localStorage.getItem("lx_tk")||null,USR=JSON.parse(localStorage.getItem("lx_usr")||"null");
 let allOrds=[],allProds=[],curOrdId=null,editPId=null,upImg=null,curPF="all",curOF="all";
 async function supa(m,tbl,q,body){
-  try{const r=await fetch(SUPA+"/rest/v1/"+tbl+"?"+(q||""),{method:m,headers:{"apikey":AK,"Authorization":"Bearer "+(TK||AK),"Content-Type":"application/json","Prefer":"return=representation"},body:body?JSON.stringify(body):undefined});const t=await r.text();if(!r.ok){window._lastSupaErr=t||("HTTP "+r.status);return null}return t?JSON.parse(t):[]}catch(e){window._lastSupaErr=String(e&&e.message||e);return null}
+  var BT=(TK&&typeof TK==="string"&&TK.split(".").length===3)?TK:AK;
+  try{const r=await fetch(SUPA+"/rest/v1/"+tbl+"?"+(q||""),{method:m,headers:{"apikey":AK,"Authorization":"Bearer "+BT,"Content-Type":"application/json","Prefer":"return=representation"},body:body?JSON.stringify(body):undefined});const t=await r.text();if(!r.ok){window._lastSupaErr=t||("HTTP "+r.status);return null}return t?JSON.parse(t):[]}catch(e){window._lastSupaErr=String(e&&e.message||e);return null}
 }
 function fmt(n){return"$"+parseFloat(n||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}
 function fmtD(d){if(!d)return"";const dt=new Date(d);return dt.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
